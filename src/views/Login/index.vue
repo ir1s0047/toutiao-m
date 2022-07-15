@@ -14,7 +14,7 @@
 
     <!-- 手机号码 -->
 
-    <van-form class="form">
+    <van-form class="form" ref="form" @submit="login">
       <van-field
         v-model="mobile"
         name="mobile"
@@ -27,7 +27,7 @@
       </van-field>
       <van-field
         v-model="code"
-        name="code"
+        name="[/{9}/]"
         placeholder="请输入验证码"
         :rules="codeRules"
       >
@@ -35,7 +35,17 @@
           <span class="toutiao toutiao-yanzhengma"></span
         ></template>
         <template #right-icon>
-          <van-button class="code-btn" size="mini"
+          <van-count-down
+            v-if="isShowCountDown"
+            :time="3 * 1000"
+            @finish="isShowCountDown = false"
+          />
+          <van-button
+            v-else
+            class="code-btn"
+            size="mini"
+            round
+            @click="sendCode"
             >发送验证码</van-button
           ></template
         ></van-field
@@ -51,7 +61,7 @@
 </template>
 
 <script>
-import { login } from '@/api/user'
+import { login, sendCode } from '@/api/user'
 import { mobileRules, codeRules } from './Rules'
 export default {
   name: 'login',
@@ -60,12 +70,29 @@ export default {
       mobile: '',
       code: '',
       mobileRules,
-      codeRules
+      codeRules,
+      isShowCountDown: false
     }
   },
   methods: {
     backToPrePage() {
       this.$router.back()
+    },
+    async sendCode() {
+      try {
+        await this.$refs.form.validate('mobile')
+        await sendCode(this.mobile)
+        this.isShowCountDown = true
+      } catch (error) {
+        if (!error.response) {
+          this.$toast.fail('请输入手机号')
+        } else {
+          const status = error.response.status
+          if (status === 404 || status === 429) {
+            this.$toast.fail(error.response.data.message)
+          }
+        }
+      }
     },
     async login() {
       this.$toast.loading({
@@ -74,10 +101,29 @@ export default {
       })
       try {
         const res = await login(this.mobile, this.code)
-        console.log(res)
-        this.$toast.success('加载成功')
-      } catch {
-        this.$toast.fail('加载失败')
+        // 存储对象
+        this.$store.commit('setUser', res.data.data)
+        this.$toast.success('登录成功')
+        // 跳转页面
+        this.$router.push('/priect')
+      } catch (error) {
+        const status = error.response.status
+        let message = '登录错误，请刷新一下'
+        if (status === 400) {
+          message = error.response.data.message
+        }
+        this.$toast.fail(message)
+        // switch (status) {
+        //   case 400:
+        //     this.$toast.fail(error.response.data.message)
+        //     break
+        //   case 507:
+        //     this.$toast.fail('登录错误，请刷新一下')
+        //     break
+        //   default:
+        //     this.$toast.fail('登录错误，请刷新一下')
+        //     break
+        // }
       }
     }
   }
