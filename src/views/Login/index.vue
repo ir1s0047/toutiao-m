@@ -14,13 +14,12 @@
 
     <!-- 手机号码 -->
 
-    <!-- 登录按钮 -->
     <van-form class="form">
       <van-field
         v-model="mobile"
         name="mobile"
         placeholder="请输入手机号"
-        :rules="[{ required: true, message: '请输入手机号' }]"
+        :rules="mobileRules"
       >
         <template #label>
           <span class="toutiao toutiao-shouji"></span
@@ -30,7 +29,7 @@
         v-model="code"
         name="code"
         placeholder="请输入验证码"
-        :rules="[{ required: true, message: '请输入验证码' }]"
+        :rules="codeRules"
       >
         <template #label>
           <span class="toutiao toutiao-yanzhengma"></span
@@ -41,6 +40,7 @@
           ></template
         ></van-field
       >
+      <!-- 登录按钮 -->
       <div style="margin: 16px">
         <van-button block type="info" native-type="submit" @click="login"
           >登录</van-button
@@ -52,12 +52,15 @@
 
 <script>
 import { login } from '@/api/user'
+import { mobileRules, codeRules } from './Rules'
 export default {
   name: 'login',
   data() {
     return {
       mobile: '',
-      code: ''
+      code: '',
+      mobileRules,
+      codeRules
     }
   },
   methods: {
@@ -65,8 +68,17 @@ export default {
       this.$router.back()
     },
     async login() {
-      const res = await login(this.mobile, this.code)
-      console.log(res)
+      this.$toast.loading({
+        message: '稍作等待，正在加载',
+        forbidClick: true
+      })
+      try {
+        const res = await login(this.mobile, this.code)
+        console.log(res)
+        this.$toast.success('加载成功')
+      } catch {
+        this.$toast.fail('加载失败')
+      }
     }
   }
 }
