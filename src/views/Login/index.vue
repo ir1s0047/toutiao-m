@@ -52,9 +52,7 @@
       >
       <!-- 登录按钮 -->
       <div style="margin: 16px">
-        <van-button block type="info" native-type="submit" @click="login"
-          >登录</van-button
-        >
+        <van-button block type="info" native-type="submit">登录</van-button>
       </div>
     </van-form>
   </div>
@@ -105,7 +103,7 @@ export default {
         this.$store.commit('setUser', res.data.data)
         this.$toast.success('登录成功')
         // 跳转页面
-        this.$router.push('/priect')
+        this.$router.push('/profile')
       } catch (error) {
         const status = error.response.status
         let message = '登录错误，请刷新一下'

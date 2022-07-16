@@ -7,7 +7,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     // 申明token
-    user: getToken || {}
+    user: getToken() || {}
   },
   mutations: {
     setUser(state, payload) {
