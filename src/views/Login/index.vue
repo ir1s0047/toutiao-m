@@ -101,6 +101,7 @@ export default {
         const res = await login(this.mobile, this.code)
         // 存储对象
         this.$store.commit('setUser', res.data.data)
+        console.log(res.data.data)
         this.$toast.success('登录成功')
         // 跳转页面
         this.$router.push('/profile')
