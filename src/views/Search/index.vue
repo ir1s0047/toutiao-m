@@ -14,7 +14,13 @@
     <!-- <SearchHistory></SearchHistory>
     <SearchResult></SearchResult>
     <SearchSuggestion></SearchSuggestion> -->
-    <component :is="componentName" :keywords="keywords"></component>
+    <component
+      :is="componentName"
+      :keywords="keywords"
+      :searchInfo="searchInfo"
+      @getSearchList="getSearchList"
+      @delSearchHistory="delSearchHistory"
+    ></component>
   </div>
 </template>
 
@@ -31,7 +37,8 @@ export default {
   data() {
     return {
       keywords: '',
-      isShowSearchResult: false
+      isShowSearchResult: false,
+      searchInfo: []
     }
   },
   computed: {
@@ -51,10 +58,28 @@ export default {
     },
     onSearch() {
       this.isShowSearchResult = true
+      this.searchInfo.push(this.keywords)
+      this.$store.commit('setSearch', this.searchInfo)
     },
     visibleSearchSuggestion() {
       this.isShowSearchResult = false
+    },
+    getSearchList(str) {
+      this.keywords = str
+      this.onSearch()
+    },
+    // 删除搜索历史
+    delSearchHistory(index) {
+      if (index === -1) {
+        this.searchInfo = []
+      } else {
+        this.searchInfo.splice(index, 1)
+      }
+      this.$store.commit('setSearch', this.searchInfo)
     }
+  },
+  created() {
+    this.searchInfo = this.$store.state.search
   }
 }
 </script>

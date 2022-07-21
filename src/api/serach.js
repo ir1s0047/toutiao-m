@@ -13,3 +13,10 @@ export const getSearchSuggestion = (q) => {
     }
   })
 }
+
+export const getSearchList = (params) => {
+  return request({
+    url: '/v1_0/search',
+    params
+  })
+}

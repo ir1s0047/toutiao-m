@@ -43,9 +43,9 @@ export default {
         if (res.data.data.options.length === 0) {
           this.$toast.fail('没有搜索建议')
         }
-        this.suggestions = res.data.data.options.fliet(Boolean)
+        this.suggestions = res.data.data.options.filter(Boolean)
       } catch (error) {
-        console.log(error)
+        this.$toast.fail('获取数据失败，请重试')
       }
     }
   },
