@@ -58,7 +58,8 @@ export default {
     },
     onSearch() {
       this.isShowSearchResult = true
-      this.searchInfo.push(this.keywords)
+      // this.searchInfo.push(this.keywords)
+      this.searchInfo.unshift(this.keywords)
       this.$store.commit('setSearch', this.searchInfo)
     },
     visibleSearchSuggestion() {

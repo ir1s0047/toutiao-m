@@ -125,6 +125,7 @@ export default {
             data: { data }
           } = await getUserInfo()
           this.userInfo = data
+          console.log(this.userInfo)
         } catch (error) {
           this.$toast.fail('请重新登录')
         }
