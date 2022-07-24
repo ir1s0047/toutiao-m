@@ -63,8 +63,47 @@
         ></div>
         <van-divider>正文结束</van-divider>
       </div>
-      <!-- /加载完成-文章详情 -->
 
+      <!-- 文章评论 -->
+      <van-list
+        v-model="loading"
+        :finished="finished"
+        finished-text="没有更多了"
+        :error="error"
+        error-text="加载失败，请重试"
+        @load="onLoad"
+      >
+        <van-cell
+          v-for="(item, index) in commentListInfo"
+          :key="index"
+          :comment="item"
+        >
+          <van-image
+            slot="icon"
+            round
+            width="30"
+            height="30"
+            style="margin-right: 10px"
+            :src="item.aut_photo"
+          />
+          <span style="color: #466b9d" slot="title">{{ item.aut_name }}</span>
+          <div slot="label">
+            <p style="color: #363636">{{ item.content }}</p>
+            <p>
+              <span style="margin-right: 10px">{{ commentDesc(item) }}</span>
+              <van-button size="mini" type="default">回复</van-button>
+            </p>
+          </div>
+          <van-icon slot="right-icon" name="like-o" />
+        </van-cell>
+        <!-- <van-cell v-for="(item, index) in commentListInfo" :key="index">
+          {{ item.content }}
+        </van-cell> -->
+      </van-list>
+      <!-- /文章评论 -->
+
+      <!-- /底部区域 -->
+      <!-- /加载完成-文章详情 -->
       <div class="article-bottom">
         <van-button class="comment-btn" type="default" round size="small"
           >写评论</van-button
@@ -75,25 +114,37 @@
           v-model="article.is_collected"
         />
         <LikeArticle :articleId="article.art_id" v-model="article.attitude" />
-        <van-icon color="#777" name="share" />
+        <van-icon color="#777" name="share" @click="showShare = true">
+          <van-share-sheet
+            v-model="showShare"
+            title="立即分享给好友"
+            @select="onSelect"
+        /></van-icon>
       </div>
-      <!-- /底部区域 -->
     </div>
   </div>
 </template>
 
 <script>
+import { Toast } from 'vant'
 import dayjs from '@/utils/dayjs'
 import './github-markdown.css'
 import CollectArticle from './components/collectArticle'
 import LikeArticle from './components/likeArticle'
-import { getArticleById, addFollow, deleteFollow } from '@/api'
+import { getArticleById, addFollow, deleteFollow, getComments } from '@/api'
 
 export default {
   data() {
     return {
       article: [],
-      articleId: ''
+      articleId: '',
+      commentListInfo: [],
+      showShare: false,
+      loading: false,
+      finished: false,
+      error: false,
+      offset: null,
+      limit: 10
     }
   },
   components: {
@@ -101,6 +152,28 @@ export default {
     LikeArticle
   },
   methods: {
+    async onLoad() {
+      try {
+        const { data } = await getComments({
+          type: 'a',
+          source: this.$route.query.id,
+          offset: this.offset,
+          limit: this.limit
+        })
+        console.log(data)
+        const { results } = data.data
+        this.commentListInfo.push(...results)
+        this.loading = false
+        if (results.length) {
+          this.offset = data.data.last_id
+        } else {
+          this.finished = true
+        }
+      } catch (err) {
+        this.error = true
+        this.loading = false
+      }
+    },
     backToPrePage() {
       this.$router.go(-1)
     },
@@ -135,10 +208,20 @@ export default {
       // 关闭按钮的 loading 状态
       this.isFollowLoading = false
       this.followLoading = false
+    },
+    onSelect(option) {
+      Toast(option.name)
+      console.log(option)
+      this.showShare = false
+    },
+    commentDesc(item) {
+      const relativeTime = dayjs(item.pubdate).fromNow()
+      return relativeTime
     }
   },
   created() {
     this.getArticleById()
+    this.onLoad()
   },
   computed: {
     articleDesc() {

@@ -7,3 +7,5 @@ export * from './news'
 export * from './serach'
 
 export * from './article'
+
+export * from './comment'
