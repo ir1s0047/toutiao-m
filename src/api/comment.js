@@ -13,3 +13,11 @@ export const getComments = (params) => {
     params
   })
 }
+
+export const addComments = (data) => {
+  return request({
+    method: 'POST',
+    url: '/v1_0/comments',
+    data
+  })
+}

@@ -73,39 +73,29 @@
         error-text="加载失败，请重试"
         @load="onLoad"
       >
-        <van-cell
+        <!-- <van-cell
           v-for="(item, index) in commentListInfo"
           :key="index"
           :comment="item"
-        >
-          <van-image
-            slot="icon"
-            round
-            width="30"
-            height="30"
-            style="margin-right: 10px"
-            :src="item.aut_photo"
-          />
-          <span style="color: #466b9d" slot="title">{{ item.aut_name }}</span>
-          <div slot="label">
-            <p style="color: #363636">{{ item.content }}</p>
-            <p>
-              <span style="margin-right: 10px">{{ commentDesc(item) }}</span>
-              <van-button size="mini" type="default">回复</van-button>
-            </p>
-          </div>
-          <van-icon slot="right-icon" name="like-o" />
-        </van-cell>
-        <!-- <van-cell v-for="(item, index) in commentListInfo" :key="index">
-          {{ item.content }}
-        </van-cell> -->
+        > -->
+        <commentItem
+          v-for="(item, index) in commentListInfo"
+          :key="index"
+          :comment="item"
+          @reply-click="onReplyShow"
+        ></commentItem>
       </van-list>
       <!-- /文章评论 -->
 
       <!-- /底部区域 -->
       <!-- /加载完成-文章详情 -->
       <div class="article-bottom">
-        <van-button class="comment-btn" type="default" round size="small"
+        <van-button
+          class="comment-btn"
+          type="default"
+          round
+          size="small"
+          @click="postCommentIsShow = !postCommentIsShow"
           >写评论</van-button
         >
         <van-icon color="#777" name="comment-o" :badge="article.comm_count" />
@@ -114,13 +104,52 @@
           v-model="article.is_collected"
         />
         <LikeArticle :articleId="article.art_id" v-model="article.attitude" />
-        <van-icon color="#777" name="share" @click="showShare = true">
-          <van-share-sheet
-            v-model="showShare"
-            title="立即分享给好友"
-            @select="onSelect"
-        /></van-icon>
+        <van-icon color="#777" name="share" @click="showShare = true" />
+        <van-share-sheet
+          v-model="showShare"
+          title="立即分享给好友"
+          :options="options"
+          @select="onSelect"
+        />
       </div>
+      <!-- 发布评论 -->
+      <van-popup
+        v-model="postCommentIsShow"
+        position="bottom"
+        :style="{ height: '120px' }"
+      >
+        <div class="messageBox" style="padding: 16px 0 16px 16px">
+          <van-field
+            v-model.trim="message"
+            rows="2"
+            autosize
+            type="textarea"
+            maxlength="50"
+            placeholder="请输入留言"
+            show-word-limit
+            style="background-color: #f5f7f9; width: 298px; height: 88px"
+          />
+          <van-button
+            type="default"
+            :disabled="!message.length"
+            @click="pushComment"
+            >发布</van-button
+          >
+        </div>
+      </van-popup>
+      <!-- 回复评论弹出层 -->
+      <van-popup
+        v-model="isReplyShow"
+        position="bottom"
+        :style="{ height: '90%' }"
+      >
+        <comment-reply
+          :comment="currentComment"
+          :articleId="id"
+          :articleId1="article"
+          v-model="article.attitude"
+        />
+      </van-popup>
     </div>
   </div>
 </template>
@@ -131,7 +160,15 @@ import dayjs from '@/utils/dayjs'
 import './github-markdown.css'
 import CollectArticle from './components/collectArticle'
 import LikeArticle from './components/likeArticle'
-import { getArticleById, addFollow, deleteFollow, getComments } from '@/api'
+import commentItem from './components/comment-item'
+import commentReply from './components/comment-reply'
+import {
+  getArticleById,
+  addFollow,
+  deleteFollow,
+  getComments,
+  addComments
+} from '@/api'
 
 export default {
   data() {
@@ -140,18 +177,42 @@ export default {
       articleId: '',
       commentListInfo: [],
       showShare: false,
+      options: [
+        { name: '微信', icon: 'wechat' },
+        { name: '微博', icon: 'weibo' },
+        { name: '复制链接', icon: 'link' },
+        { name: '分享海报', icon: 'poster' },
+        { name: '二维码', icon: 'qrcode' }
+      ],
       loading: false,
       finished: false,
       error: false,
       offset: null,
-      limit: 10
+      limit: 10,
+      show: '',
+      postCommentIsShow: false,
+      message: '',
+      currentComment: {},
+      isReplyShow: false,
+      id: this.$route.query.id
     }
   },
   components: {
     CollectArticle,
-    LikeArticle
+    LikeArticle,
+    commentItem,
+    commentReply
   },
   methods: {
+    onReplyShow(comment) {
+      // 将子组件中传给我评论对象存储到当前组件
+      this.currentComment = comment
+      // console.log(comment)
+
+      // 展示评论回复弹层
+      this.isReplyShow = true
+    },
+    // 文章详情评论区
     async onLoad() {
       try {
         const { data } = await getComments({
@@ -160,7 +221,6 @@ export default {
           offset: this.offset,
           limit: this.limit
         })
-        console.log(data)
         const { results } = data.data
         this.commentListInfo.push(...results)
         this.loading = false
@@ -174,15 +234,19 @@ export default {
         this.loading = false
       }
     },
+    // 返回上一页
     backToPrePage() {
       this.$router.go(-1)
     },
+    // 获取文章详情
     async getArticleById() {
       const res = await getArticleById(this.$route.query.id)
-      console.log(res)
+      this.id = this.$route.query.id
+      console.log('文章详情', res)
       this.article = res.data.data
-      console.log(this.article)
+      console.log('article', this.article)
     },
+    // 关注功能
     async onFollow() {
       this.followLoading = true
       // 开启按钮的 loading 状态
@@ -209,19 +273,38 @@ export default {
       this.isFollowLoading = false
       this.followLoading = false
     },
+    // 分享组件
     onSelect(option) {
       Toast(option.name)
-      console.log(option)
       this.showShare = false
     },
+    // 时间格式化
     commentDesc(item) {
       const relativeTime = dayjs(item.pubdate).fromNow()
       return relativeTime
+    },
+    // 发布评论
+    async pushComment() {
+      try {
+        const { data } = await addComments({
+          target: this.article.art_id,
+          content: this.message,
+          art_id: null
+        })
+        console.log('发布评论内容', data)
+        this.commentListInfo.unshift(data.data.new_obj)
+        // console.log('发布评论内容', this.commentListInfo)
+        this.postCommentIsShow = false
+        this.$toast.success('发布成功')
+        this.message = ''
+      } catch (err) {
+        this.$toast.fail('发布失败')
+        console.log(err)
+      }
     }
   },
   created() {
     this.getArticleById()
-    this.onLoad()
   },
   computed: {
     articleDesc() {
@@ -235,6 +318,15 @@ export default {
 
 <style scoped lang="less">
 .article-container {
+  .messageBox {
+    display: flex;
+    align-items: center;
+    .van-button--default {
+      color: #6ba3d8;
+      font-size: 14px;
+      border: 0.02667rem solid #fff;
+    }
+  }
   .page-nav-bar {
     background-color: #3296fa;
     :deep(.van-nav-bar__title) {
