@@ -146,7 +146,7 @@
         <comment-reply
           :comment="currentComment"
           :articleId="id"
-          :articleId1="article"
+          :articleId1="currentComment"
           v-model="article.attitude"
         />
       </van-popup>

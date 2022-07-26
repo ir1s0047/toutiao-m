@@ -53,3 +53,29 @@ export const deleteFollow = (userId) => {
     url: `/v1_0/user/followings/${userId}`
   })
 }
+
+// 获取用户个人资料
+export const takeUserInfo = () => {
+  return request({
+    url: '/v1_0/user/profile'
+  })
+}
+
+/**
+ * 更新昵称
+ */
+export const updateUserName = (data) => {
+  return request({
+    method: 'PATCH',
+    url: '/v1_0/user/profile',
+    data
+  })
+}
+
+export const updateUserPhotoAPI = (fd) => {
+  return request({
+    method: 'PATCH',
+    url: '/v1_0/user/photo',
+    data: fd
+  })
+}

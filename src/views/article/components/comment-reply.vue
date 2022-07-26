@@ -49,12 +49,13 @@
           <!-- 评论回复 -->
           <!-- /评论回复 -->
           <van-icon
-            :color="value === 1 ? 'red' : ''"
+            :color="value === 1 ? '#99a1ad' : ''"
             :name="value === 1 ? 'good-job' : 'good-job-o'"
             :class="{ collected: value }"
             @click="ClickNice"
             :loading="loading"
-          />
+            >赞</van-icon
+          >
         </van-cell>
       </van-list>
     </div>
@@ -200,9 +201,9 @@ export default {
         // 是否收藏
         if (this.value === 1) {
           // 父组件 传递articleId
-          await UnLikings(this.articleId1.art_id)
+          await UnLikings(this.articleId)
         } else {
-          await Likings(this.articleId1.art_id)
+          await Likings(this.articleId)
           status = 1
         }
         // 更新视图
